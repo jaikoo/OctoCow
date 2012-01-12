@@ -67,9 +67,9 @@ module OctoCow
   class Team < Hashie::Mash
     attr_reader :session
     
-    def initialize(session, opts)
+    def initialize(session, *opts)
       @session = session
-      super(opts)
+      super(*opts)
     end
 
     def members
