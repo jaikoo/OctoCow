@@ -58,7 +58,6 @@ module OctoCow
   class Organisation < OpenStruct
 
     def teams(&block)
-      raise ArgumentError, "Needs a block to be passed" unless block_given?
       path = "/orgs/#{login}/teams"
       session.call(path).each do |team| 
         yield Team.new(team.merge(session: session))
@@ -70,10 +69,18 @@ module OctoCow
 
   class Team < OpenStruct
 
-    def members
-      
+    def members(&block)
+      path = "/teams/#{id}/members"
+      session.call(path).each do |member|
+        yield User.new(member.merge(session: session))
+      end
     end
 
+  end
+  
+ 
+  class User < OpenStruct
+    
   end
 
 

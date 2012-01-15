@@ -25,15 +25,19 @@ describe OctoCow do
         it 'should be possible to get a list of teams of an organisation' do
           @authed_session.organisations do |org|
             org.teams do |team|
-              team.name.should_not be_nil
+              team.should be_instance_of OctoCow::Team
+              team.name.should_not be_nil              
             end
           end
         end
 
         describe '#members' do
-          pending
           it 'should be possible to see members of a team' do
-            
+            @authed_session.organisations do |org|
+              org.teams do |team|
+                team.members {|member| member.should be_instance_of OctoCow::User}
+              end
+            end            
           end  
 
         end
