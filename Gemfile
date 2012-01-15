@@ -1,7 +1,7 @@
 gem 'faraday'
 gem 'faraday_middleware'
+gem 'multi_json'
 gem 'hashie'
-gem 'jbuilder'
 
 group :test do
 	gem 'rspec'

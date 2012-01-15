@@ -2,6 +2,8 @@ require 'logger'
 require 'hashie'
 require 'faraday'
 require 'faraday_middleware'
+require 'ostruct'
+require 'multi_json'
 
 module OctoCow
 
@@ -31,15 +33,17 @@ module OctoCow
       @conn = OctoCow::Connection.new(auth_token)
     end
 
-    def organisations
+    def organisations(&block)
+      raise ArgumentError, "Needs a block to be passed" unless block_given?
       path = @token ? '/user/orgs' : "/users/#{@username}/orgs"
-      puts path
-      call(path)
+      call(path).each do |org|
+        yield Organisation.new(org.merge(session: self))
+      end
     end
 
     def organisation(id)
       path = "/org/#{id}"
-      call(path).map {|org| Organisation.new(self, org)}
+      # call(path).map {|org| Organisation.load(self, org)}
     end
 
     def call(path)
@@ -50,27 +54,21 @@ module OctoCow
   end
 
 
-  class Organisation < Hashie::Mash; 
-    attr_reader :session
-    def initialize(session, opts)
-      @session = session
-      super(opts)
-    end
 
-    def teams
+  class Organisation < OpenStruct
+
+    def teams(&block)
+      raise ArgumentError, "Needs a block to be passed" unless block_given?
       path = "/orgs/#{login}/teams"
-      @session.call(path).map {|t| Team.new(session, t)}
+      session.call(path).each do |team| 
+        yield Team.new(team.merge(session: session))
+      end
     end
 
   end
 
-  class Team < Hashie::Mash
-    attr_reader :session
-    
-    def initialize(session, *opts)
-      @session = session
-      super(*opts)
-    end
+
+  class Team < OpenStruct
 
     def members
       
@@ -85,7 +83,6 @@ module OctoCow
 
     def initialize(auth_token)
       auth_opts = auth_token ? {Authorization: "token #{auth_token}"} : {}
-      puts auth_opts
       @connection = Faraday::Connection.new(
                   url: 'https://api.github.com',
                   headers: {:accept => 'application/json',
@@ -99,9 +96,7 @@ module OctoCow
     end
 
     def call(path)
-      b = @connection.get(path).body
-      puts b
-      b
+      @connection.get(path).body
     end
   end
 
