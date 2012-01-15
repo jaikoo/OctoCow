@@ -12,7 +12,7 @@ describe OctoCow do
     describe '#organisations' do
 
       it 'should return a list of organisations the user belongs to' do
-        @authed_session.organisations.each {|o| o.instance_of? OctoCow::Organisation}  
+        @authed_session.organisations {|o| o.instance_of? OctoCow::Organisation}  
       end
 
 

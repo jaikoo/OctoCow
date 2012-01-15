@@ -2,6 +2,7 @@ require 'logger'
 require 'hashie'
 require 'faraday'
 require 'faraday_middleware'
+require 'ostruct'
 
 module OctoCow
 
@@ -31,10 +32,12 @@ module OctoCow
       @conn = OctoCow::Connection.new(auth_token)
     end
 
-    def organisations
+    def organisations(&block)
+      raise ArgumentError, "Needs a block to be passed" unless block_given?
       path = @token ? '/user/orgs' : "/users/#{@username}/orgs"
-      puts path
-      call(path)
+      call(path).each do |org|
+        yield Organisation.new(self, org)
+      end
     end
 
     def organisation(id)
@@ -49,28 +52,34 @@ module OctoCow
 
   end
 
-
-  class Organisation < Hashie::Mash; 
-    attr_reader :session
-    def initialize(session, opts)
-      @session = session
-      super(opts)
+  module Sessions
+    module ClassMethods
+      def initialize(session, *opts)
+        session = session
+        super(opts.first)
+        self
+      end
     end
+    
+    def self.included(receiver)
+      receiver.extend         ClassMethods
+      receiver.send :attr_accessor, :session
+    end
+  end
+
+
+  class Organisation < OpenStruct
+    include Sessions
 
     def teams
       path = "/orgs/#{login}/teams"
-      @session.call(path).map {|t| Team.new(session, t)}
+      session.call(path).map {|t| Team.new(session, t)}
     end
 
   end
 
-  class Team < Hashie::Mash
-    attr_reader :session
-    
-    def initialize(session, opts)
-      @session = session
-      super(opts)
-    end
+  class Team < OpenStruct
+    include Sessions
 
     def members
       
@@ -99,9 +108,7 @@ module OctoCow
     end
 
     def call(path)
-      b = @connection.get(path).body
-      puts b
-      b
+      @connection.get(path).body
     end
   end
 
