@@ -8,6 +8,8 @@ require 'multi_json'
 module OctoCow
 
 	GITHUB_API_VERSION = 'v3'
+  
+  VERSION = '0.0.1'
 
 	@@logging = false
 	@@log 		= Logger.new($STDOUT)
