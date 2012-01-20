@@ -5,6 +5,7 @@ require 'faraday_middleware'
 require 'ostruct'
 require 'multi_json'
 
+
 module OctoCow
 
 	GITHUB_API_VERSION = 'v3'
